@@ -10,8 +10,11 @@ socket_num(in_socket_num), cur_ptr_(0), core_offset(in_core_offset)
     /*Configure settings in address struct*/
     servaddr_.sin_family = AF_INET;
     servaddr_.sin_port = htons(7891);
-    servaddr_.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr_.sin_addr.s_addr = inet_addr("255.255.255.255");
     memset(servaddr_.sin_zero, 0, sizeof(servaddr_.sin_zero));  
+
+    const char* bind_dev = "eno1";
+    int broadcast_enable = 1;
 
     for(int i = 0; i < socket_num; i++)
     {
@@ -29,6 +32,15 @@ socket_num(in_socket_num), cur_ptr_(0), core_offset(in_core_offset)
         /*Bind socket with address struct*/
         if(bind(socket_[i], (struct sockaddr *) &cliaddr_, sizeof(cliaddr_)) != 0)
             perror("socket bind failed");
+
+        /*Bind socket with a device*/
+        if (setsockopt(socket_[i], SOL_SOCKET, SO_BINDTODEVICE, bind_dev, strlen(bind_dev) + 1))
+            perror("BINDTODEVICE");
+
+        /*Enable socket to broadcast*/
+        if (setsockopt(socket_[i], SOL_SOCKET, SO_BROADCAST, &broadcast_enable, sizeof(broadcast_enable)))
+            perror("Socket broadcast enable failed");
+
     }
 
     /* initialize random seed: */
